@@ -1,0 +1,39 @@
+package chat;
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+
+public class ChatServer {
+    public static final String GROUP_ADDRESS = "224.0.0.1";
+    public static final int PORT = 8888;
+
+    public static void main(String[] args) {
+        DatagramSocket socket = null;
+        try {
+            InetAddress address = InetAddress.getByName(GROUP_ADDRESS);
+            socket = new DatagramSocket();
+
+            byte[] buffer = new byte[4096];
+            while (true) {
+                DatagramPacket inPacket = new DatagramPacket(buffer, buffer.length);
+                socket.receive(inPacket); // Nhận tin nhắn từ client
+
+                String msg = new String(inPacket.getData(), 0, inPacket.getLength());
+                System.out.println("Server received: " + msg);
+
+                // Gửi tin nhắn tới tất cả các client
+                DatagramPacket outPacket = new DatagramPacket(msg.getBytes(), msg.getBytes().length, address, PORT);
+                socket.send(outPacket);
+                System.out.println("Server sent packet with msg: " + msg);
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } finally {
+            if (socket != null) {
+                socket.close();
+            }
+        }
+    }
+}
