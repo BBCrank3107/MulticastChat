@@ -19,9 +19,9 @@ public class ChatClient extends JFrame {
     private MulticastSocket socket;
     private InetAddress group;
     private String username;
-    private String selectedUser; // Người dùng được chọn để chat riêng tư
-    private boolean inGroupChat; // Trạng thái tham gia chat nhóm
-    private String ipAddress; // Địa chỉ IP của client
+    private String selectedUser; 
+    private boolean inGroupChat; 
+    private String ipAddress; 
 
     public static final String GROUP_ADDRESS = "224.0.0.1";
     public static final int PORT = 8888;
@@ -41,7 +41,6 @@ public class ChatClient extends JFrame {
         userLabel = new JLabel("User: " + username);
         add(userLabel, BorderLayout.NORTH);
 
-        // Lấy địa chỉ IP của client
         try {
             InetAddress localHost = InetAddress.getLocalHost();
             ipAddress = localHost.getHostAddress();
@@ -52,8 +51,7 @@ public class ChatClient extends JFrame {
 
         users = new HashSet<>();
         users.add(username);
-        inGroupChat = true; // Mặc định là tham gia chat nhóm
-
+        inGroupChat = true; 
         userListModel = new DefaultListModel<>();
         userList = new JList<>(userListModel);
         userList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -66,49 +64,44 @@ public class ChatClient extends JFrame {
         chatField = new JTextField();
         add(chatField, BorderLayout.SOUTH);
 
-        // Tạo panel để chứa userList và các nút
         JPanel userPanel = new JPanel();
-        userPanel.setLayout(new BoxLayout(userPanel, BoxLayout.Y_AXIS)); // Sắp xếp theo chiều dọc
+        userPanel.setLayout(new BoxLayout(userPanel, BoxLayout.Y_AXIS)); 
 
-        // Thêm userList vào userPanel
         userPanel.add(new JScrollPane(userList));
 
-        // Thêm nút "Chat Private"
         JButton chooseButton = new JButton("Chat Private");
         chooseButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                selectedUser = userList.getSelectedValue(); // Lưu người dùng được chọn
+                selectedUser = userList.getSelectedValue(); 
                 if (selectedUser != null) {
                     userLabel.setText("User: " + username + " (Private chat with " + selectedUser + ")");
                 }
             }
         });
-        userPanel.add(chooseButton); // Thêm nút vào phía dưới userList
+        userPanel.add(chooseButton);
 
-        // Thêm nút "Chat Group"
         JButton groupChatButton = new JButton("Chat Group");
         groupChatButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                selectedUser = null; // Đặt lại selectedUser
-                inGroupChat = true; // Đặt trạng thái là tham gia chat nhóm
-                userLabel.setText("User: " + username + " (Group chat)"); // Cập nhật thông báo
+                selectedUser = null; 
+                inGroupChat = true; 
+                userLabel.setText("User: " + username + " (Group chat)");
             }
         });
-        userPanel.add(groupChatButton); // Thêm nút vào phía dưới nút "Chat Private"
+        userPanel.add(groupChatButton);
 
-        // Thêm nút "Leave Group"
         JButton leaveGroupButton = new JButton("Leave Group");
         leaveGroupButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                selectedUser = null; // Đặt lại selectedUser
-                inGroupChat = false; // Đặt trạng thái là không tham gia chat nhóm
-                userLabel.setText("User: " + username + " (Left Group)"); // Cập nhật thông báo
+                selectedUser = null; 
+                inGroupChat = false; 
+                userLabel.setText("User: " + username + " (Left Group)"); 
             }
         });
-        userPanel.add(leaveGroupButton); // Thêm nút vào phía dưới nút "Chat Group"
+        userPanel.add(leaveGroupButton); 
 
         add(userPanel, BorderLayout.EAST);
 
@@ -117,9 +110,9 @@ public class ChatClient extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 String message = chatField.getText();
                 if (selectedUser != null) {
-                    sendMessage("PRIVATE:" + username + ":" + selectedUser + ":" + ipAddress + ":" + message); // Gửi tin nhắn riêng tư
+                    sendMessage("PRIVATE:" + username + ":" + selectedUser + ":" + ipAddress + ":" + message); 
                 } else if (inGroupChat) {
-                    sendMessage(username + ":" + ipAddress + ": " + message); // Gửi tin nhắn công khai
+                    sendMessage(username + ":" + ipAddress + ": " + message); 
                 }
                 chatField.setText("");
             }
@@ -162,19 +155,19 @@ public class ChatClient extends JFrame {
                 try {
                     DatagramPacket inPacket = new DatagramPacket(BUFFER, BUFFER.length);
                     socket.receive(inPacket);
+                    
+                    String senderIpAddress = inPacket.getAddress().getHostAddress();
+                    
                     String msg = new String(BUFFER, 0, inPacket.getLength());
                     
-                    // Kiểm tra xem tin nhắn có phải là tin nhắn riêng tư không
                     if (msg.startsWith("PRIVATE")) {
                         String[] parts = msg.split(":");
                         if (parts.length == 5 && (parts[1].equals(username) || parts[2].equals(username))) {
-                            // Hiển thị tin nhắn riêng tư nếu người nhận hoặc người gửi là username hiện tại
-                            chatArea.append("[Private] " + parts[1] + " to " + parts[2] + " (IP: " + parts[3] + "): " + parts[4] + "\n");
+                            chatArea.append("[Private] " + parts[1] + " to " + parts[2] + " (IP: " + senderIpAddress + "): " + parts[4] + "\n");
                         }
                     } else if (inGroupChat) {
-                        // Chỉ hiển thị tin nhắn nhóm khi inGroupChat là true
                         String[] parts = msg.split(":");
-                        chatArea.append(parts[0] + " (IP: " + parts[1] + "): " + parts[2] + "\n");
+                        chatArea.append(parts[0] + " (IP: " + senderIpAddress + "): " + parts[2] + "\n");
                         if (parts.length > 0) {
                             users.add(parts[0]);
                         }
